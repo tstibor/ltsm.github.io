@@ -1,0 +1,442 @@
+#+TITLE:     TSM Server Installation Guide
+#+AUTHOR:    Thomas Stibor
+#+EMAIL:     t.stibor@gsi.de
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="org.css" />
+
+* CentOS 7.2 and TSM Server 7.1.3
+Setup e.g. in a KVM a CentOS 7.2 guest system with at least 12 GB RAM and 50 GB harddisk space.
+The following KVM settings are used
+#+BEGIN_SRC txt
+<network>
+  <name>kvmnatbr</name>
+  <uuid>12f40c73-3377-4b7b-a704-1e4e6a6f01db</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='kvmnatbr' stp='on' delay='0'/>
+  <mac address='12:54:00:e4:56:7b'/>
+  <domain name='kvm'/>
+  <dns>
+    <host ip='192.168.254.101'>
+      <hostname>tsm-centos-7-2</hostname>
+    </host>
+  </dns>
+  <ip address='192.168.254.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.254.1' end='192.168.254.253'/>
+      <host mac='00:00:00:25:41:01' name='tsm-centos-7-2.kvm' ip='192.168.254.101'/>
+    </dhcp>
+  </ip>
+</network>
+#+END_SRC
+For installing the KVM instance following commands are executed
+#+BEGIN_SRC sh
+sudo qemu-img create -fqcow2 -o preallocation=metadata tsm-centos-7-2.qcow2 50G
+sudo virt-install -d --name=tsm-centos-7-2 --ram 8192 --vcpu 2 --disk path=/home/kvm/tsm-centos-7-2.qcow2,bus=virtio,cache=none,format=qcow2 \
+                  --network bridge=kvmnatbr,model=virtio,mac=00:00:00:25:41:01 --os-type=linux --location=http://mirror.centos.org/centos/7/os/x86_64 -k de
+#+END_SRC
+
+During installation create a user and group named =tsm:tsm=.
+
+** Stop and disable Firewall
+#+BEGIN_SRC sh
+systemctl stop firewalld
+systemctl disable firewalld
+#+END_SRC
+
+** Verify that firewall is disabled
+#+BEGIN_SRC sh
+iptables -L
+#+END_SRC
+
+** Disable SELinux
+Modify =SELINUX=enforcing= to =SELINUX=disabled= in file =/etc/sysconfig/selinux= to persistently
+disable SELinux and verify after booting the settings with command
+#+BEGIN_SRC sh
+sestatus
+#+END_SRC
+** Install the following packages
+#+BEGIN_SRC sh
+yum install ksh libaio rsh lsscsi compat-glibc*
+#+END_SRC
+* Install TSM Server
+** Download the latest TSM Server
+   IBM provides binary for Linux64 at [[ftp://ftp.software.ibm.com/storage/tivoli-storage-management/maintenance/server/v7r1/Linux/]].
+   Other versions (and other architectures) are provided here [[ftp://ftp.software.ibm.com/storage/tivoli-storage-management/maintenance/server/]].
+** Console Installation
+#+BEGIN_SRC sh
+./install.sh -c -acceptLicense -vmargs "-DBYPASS_TSM_REQ_CHECKS=true"
+#+END_SRC
+** Package Selection
+#+BEGIN_SRC txt
+Select packages to install:
+     1. [X] IBM® Installation Manager 1.8.2.1
+     2. [X] IBM Tivoli Storage Manager server 7.1.3.20150827_1628
+     3. [ ] IBM Tivoli Storage Manager languages 7.1.3.20150827_1622
+     4. [X] IBM Tivoli Storage Manager license 7.1.3.20150827_1621
+     5. [X] IBM Tivoli Storage Manager storage agent 7.1.3.20150827_1621
+     6. [X] IBM Tivoli Storage Manager device driver 7.1.3.20150827_1624
+     7. [X] IBM Tivoli Storage Manager Operations Center 7.1.3000.20150821_0553
+#+END_SRC
+Ignore the warnings and continue with default values by hitting N and accepting the license.
+Choose a password and finally install product 1
+#+BEGIN_SRC txt
+Select the product that you purchased:
+     1. IBM Tivoli Storage Manager
+     2. IBM Tivoli Storage Manager Extended Edition
+     3. IBM System Storage Archive Manager
+#+END_SRC
+* Login as user tsm and perform following steps
+** Create directory =tsm-server= and database instance for user tsm
+#+BEGIN_SRC sh
+mkdir -p tsm-server && cd tsm-server
+sudo /opt/tivoli/tsm/db2/instance/db2icrt -a SERVER -s ese -u tsm tsm
+/opt/tivoli/tsm/db2/bin/db2 update dbm cfg using dftdbpath /home/tsm/tsm-server
+#+END_SRC
+** Create =dsmserv.opt= with following entries
+#+BEGIN_SRC sh
+echo "DEVCONFIG /home/tsm/tsm-server/devconf.dat" >> /home/tsm/tsm-server/dsmserv.opt
+echo "VOLUMEHISTORY /home/tsm/tsm-server/volhist.dat" >> /home/tsm/tsm-server/dsmserv.opt
+#+END_SRC
+** Initialize DB2 environment by adding following lines into =$HOME/.profile=
+#+BEGIN_SRC txt
+if [ -f /home/tsm/sqllib/db2profile ]; then
+    . /home/tsm/sqllib/db2profile
+fi
+#+END_SRC
+and execute command
+#+BEGIN_SRC sh
+source $HOME/.profile
+#+END_SRC
+** Create and format database and log locations
+#+BEGIN_SRC sh
+cd $HOME/tsm-server && mkdir -p db && mkdir -p log/active_log && mkdir -p log/archive_log
+$HOME/sqllib/adm/db2set -i tsm DB2CODEPAGE=819
+dsmserv format dbdir=/home/tsm/tsm-server/db activelogsize=8196 activelogdir=/home/tsm/tsm-server/log/active_log archlogdir=/home/tsm/tsm-server/log/archive_log
+#+END_SRC
+** Update file =userprofile= in =$HOME/sqllib/userprofile=
+#+BEGIN_SRC txt
+export DSMI_CONFIG=/home/tsm/tsm-server/tsmdbmgr.opt
+export DSMI_DIR=/opt/tivoli/tsm/client/api/bin64
+export DSMI_LOG=/home/tsm/tsm-server
+#+END_SRC
+** Install TSM Client for Testing
+#+BEGIN_SRC sh
+rpm --install /mnt/dvd/tsmcli/linux86/gskcrypt64-8.0.50.44.linux.x86_64.rpm
+              /mnt/dvd/tsmcli/linux86/gskssl64-8.0.50.44.linux.x86_64.rpm
+              /mnt/dvd/tsmcli/linux86/TIVsm-BA.x86_64.rpm
+              /mnt/dvd/tsmcli/linux86/TIVsm-API64.x86_64.rpm
+#+END_SRC
+** Create file =/home/tsm/tsm-server/tsmdbmgr.opt= with content
+#+BEGIN_SRC txt
+servername lxdv81-kvm-tsm-server
+#+END_SRC
+
+** Create file =/opt/tivoli/tsm/client/api/bin64/dsm.sys= with content
+#+BEGIN_SRC txt
+SERVERNAME lxdv81-kvm-tsm-server
+NODENAME tsm-centos-7-2.kvm
+TCPSERVERADDRESS 192.168.254.101
+#+END_SRC
+
+** Start TSM Server
+#+BEGIN_SRC sh
+dsmserv
+#+END_SRC
+
+** Create admin account and grant access
+#+BEGIN_SRC sh
+TSM:SERVER1> register admin admin admin
+TSM:SERVER1> grant authority admin class=system
+#+END_SRC
+
+** Login from any machine with admin account as follows
+#+BEGIN_SRC sh
+dsmadmc -se=lxdv81-kvm-tsm-server -id=admin -password=admin
+#+END_SRC
+and make sure file =/opt/tivoli/tsm/client/ba/bin/dsm.sys= has entries
+#+BEGIN_SRC txt
+SErvername lxdv81-kvm-tsm-server
+   Nodename lxdv81
+   TCPServeraddress 192.168.254.101
+#+END_SRC
+
+** Register license
+Login with admin account as execute
+#+BEGIN_SRC sh
+register license file=/opt/tivoli/tsm/server/bin/tsmbasic.lic
+register license file=/opt/tivoli/tsm/server/bin/tsmee.lic
+register license file=/opt/tivoli/tsm/server/bin/dataret.lic
+
+query license
+#+END_SRC
+
+** Set Servername and IP Address
+#+BEGIN_SRC sh
+dsmadmc -se=lxdv81-kvm-tsm-server -id=admin -password=admin
+set servername lxdv81-kvm-tsm-server
+set serverhladdress 192.168.254.101
+q status
+#+END_SRC
+
+** Create storage directory and TSM device class assigned to this directory
+#+BEGIN_SRC sh
+mkdir /home/tsm/tsm-storage
+#+END_SRC
+#+BEGIN_SRC sh
+define devc fsdir_devc devt=file maxcap=15G dir=/home/tsm/tsm-storage
+q devc
+#+END_SRC
+** Create TSM storage group and assign to device class =fsdir_devc=
+#+BEGIN_SRC sh
+define stg fsdir_stg fsdir_devc maxscr=999
+q stg
+#+END_SRC
+
+#+BEGIN_SRC sh
+define domain 1year_domain archretention=365 backretention=365 description="1 year retention backup and archive"
+define domain 10year_domain archretention=3650 backretention=3650 description="10 year retention backup and archive"
+q domain
+#+END_SRC
+** Create TSM policyset and management class
+#+BEGIN_SRC sh
+define policyset 10year_domain fsdir10year_policyset
+define policyset 1year_domain fsdir1year_policyset
+q policyset f=d
+
+define mgmtclass 10year_domain fsdir10year_policyset fsdir10year_mgmtclass
+define mgmtclass 1year_domain fsdir1year_policyset fsdir1year_mgmtclass
+q mgmtclass
+#+END_SRC
+** Create TSM copygroup for backup and archive
+#+BEGIN_SRC sh
+define copygroup 10year_domain fsdir10year_policyset fsdir10year_mgmtclass dest=fsdir_stg
+define copygroup 10year_domain fsdir10year_policyset fsdir10year_mgmtclass dest=fsdir_stg type=archive
+
+define copygroup 1year_domain fsdir1year_policyset fsdir1year_mgmtclass dest=fsdir_stg
+define copygroup 1year_domain fsdir1year_policyset fsdir1year_mgmtclass dest=fsdir_stg type=archive
+
+q copygroup
+#+END_SRC
+** Assign and activate TSM management class and policyset
+#+BEGIN_SRC sh
+assign defmgmt 10year_domain fsdir10year_policyset fsdir10year_mgmtclass
+assign defmgmt 1year_domain fsdir1year_policyset fsdir1year_mgmtclass
+
+q domain 10year_domain
+q domain 1year_domain
+
+activate policyset 10year_domain fsdir10year_policyset
+activate policyset 1year_domain fsdir1year_policyset
+
+q domain 10year_domain
+q domain 1year_domain
+#+END_SRC
+** Register node and bind to domain
+#+BEGIN_SRC sh
+register node lxdv81 lxdv81 domain=10year_domain
+#+END_SRC
+* Perform an archiving task
+In this example we clone the telescope guiding software [[http://openphdguiding.org/][PHD2]] and archive the data
+#+BEGIN_SRC sh
+git clone https://github.com/OpenPHDGuiding/phd2
+dsmc archive -subdir=yes -se=LXDV81-KVM-TSM-SERVER /home/tstibor/tsm-testing/to_archive/phd2/
+IBM Tivoli Storage Manager
+Command Line Backup-Archive Client Interface
+  Client Version 7, Release 1, Level 3.1
+  Client date/time: 01/28/2016 12:58:44
+(c) Copyright by IBM Corporation and other(s) 1990, 2015. All Rights Reserved.
+
+Node Name: LXDV81
+Please enter your user id <LXDV81>: lxdv81
+
+Please enter password for user id "LXDV81":
+
+Session established with server LXDV81-KVM-TSM-SERVER: Linux/x86_64
+  Server Version 7, Release 1, Level 3.0
+  Server date/time: 01/28/2016 12:59:07  Last access: 01/28/2016 12:58:11
+
+Archive function invoked.
+
+ANS1898I ***** Processed       500 files *****
+Directory-->               4,096 /home [Sent]
+Directory-->               4,096 /home/tstibor [Sent]
+Directory-->               4,096 /home/tstibor/tsm-testing [Sent]
+Directory-->               4,096 /home/tstibor/tsm-testing/to_archive [Sent]
+Directory-->              12,288 /home/tstibor/tsm-testing/to_archive/phd2 [Sent]
+Directory-->               4,096 /home/tstibor/tsm-testing/to_archive/phd2/.git [Sent]
+Directory-->               4,096 /home/tstibor/tsm-testing/to_archive/phd2/WinLibs [Sent]
+Directory-->               4,096 /home/tstibor/tsm-testing/to_archive/phd2/build [Sent]
+Directory-->               4,096 /home/tstibor/tsm-testing/to_archive/phd2/cam_KWIQGuider [Sent]
+...
+...
+Normal File-->            12,288 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/capture.txt [Sent]
+Normal File-->               345 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/connect.txt [Sent]
+Normal File-->            20,664 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/firmware.txt [Sent]
+Archive processing of '/home/tstibor/tsm-testing/to_archive/phd2/*' finished without failure.
+
+
+Total number of objects inspected:          828
+Total number of objects archived:           828
+Total number of objects updated:              0
+Total number of objects rebound:              0
+Total number of objects deleted:              0
+Total number of objects expired:              0
+Total number of objects failed:               0
+Total number of objects encrypted:            0
+Total number of objects grew:                 0
+Total number of retries:                      0
+Total number of bytes inspected:         142.17 MB
+Total number of bytes transferred:       141.84 MB
+Data transfer time:                        0.47 sec
+Network data transfer rate:          305,236.54 KB/sec
+Aggregate data transfer rate:         87,341.12 KB/sec
+Objects compressed by:                        0%
+Total data reduction ratio:                0.24%
+Elapsed processing time:               00:00:01
+#+END_SRC
+No we delete the data and retrieve the archive back
+#+BEGIN_SRC sh
+rm -rf phd2
+dsmc retrieve -subdir=yes -se=LXDV81-KVM-TSM-SERVER /home/tstibor/tsm-testing/to_archive/phd2/
+IBM Tivoli Storage Manager
+Command Line Backup-Archive Client Interface
+  Client Version 7, Release 1, Level 3.1
+  Client date/time: 01/28/2016 13:03:59
+(c) Copyright by IBM Corporation and other(s) 1990, 2015. All Rights Reserved.
+
+Retrieve function invoked.
+
+Node Name: LXDV81
+Please enter your user id <LXDV81>: lxdv81
+
+Please enter password for user id "LXDV81":
+
+Session established with server LXDV81-KVM-TSM-SERVER: Linux/x86_64
+  Server Version 7, Release 1, Level 3.0
+  Server date/time: 01/28/2016 13:04:23  Last access: 01/28/2016 12:59:11
+
+ANS1898I ***** Processed       500 files *****
+Retrieving          12,288 /home/tstibor/tsm-testing/to_archive/phd2 [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/build [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/cameras [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/cam_KWIQGuider [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/cmake_modules [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/contributions [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/debian [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/extra_frameworks [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/.git [Done]
+Retrieving           4,096 /home/tstibor/tsm-testing/to_archive/phd2/help [Done]
+...
+...
+Retrieving           3,979 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/src/openssag.h [Done]
+Retrieving           5,825 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/src/loader.cpp [Done]
+Retrieving             203 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/src/commandline/Makefile.am [Done]
+Retrieving           5,935 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/src/commandline/ssag.cpp [Done]
+Retrieving          50,422 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/src/firmware.h [Done]
+Retrieving           2,954 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/bootloader.txt [Done]
+Retrieving          12,288 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/capture.txt [Done]
+Retrieving             345 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/connect.txt [Done]
+Retrieving          20,664 /home/tstibor/tsm-testing/to_archive/phd2/thirdparty/openssag/usbtraffic/firmware.txt [Done]
+
+Retrieve processing finished.
+
+Total number of objects retrieved:          824
+Total number of objects failed:               0
+Total number of bytes transferred:       141.80 MB
+Data transfer time:                        0.39 sec
+Network data transfer rate:          367,024.11 KB/sec
+Aggregate data transfer rate:         46,696.16 KB/sec
+Elapsed processing time:               00:00:03
+#+END_SRC
+* Frequent commands
+** Query space occupation
+#+BEGIN_SRC sh
+q occu
+q occu type=backup
+q occu type=archive
+q occu lxdv81 type=archive
+#+END_SRC
+
+** Remove Node
+*** Try to remove a node
+#+BEGIN_SRC sh
+REMove Node lxdv81
+Do you wish to proceed? (Yes (Y)/No (N)) Y
+ANR2152E REMOVE NODE: Inventory references still exist for node LXDV81.
+ANS8001I Return code 13.
+#+END_SRC
+*** Query the filespace
+#+BEGIN_SRC sh
+q filesp  lxdv81
+
+Node Name           Filespace       FSID     Platform     Filespac-     Is Filesp-        Capacity      Pct
+                    Name                                  e Type        ace Unico-                      Util
+                                                                           de?
+---------------     -----------     ----     --------     ---------     ----------     -----------     -----
+LXDV81              /                  1     Linux        EXT2              No              467 GB      70.9
+                                              x86-64
+#+END_SRC
+*** Delete filespace of node
+#+BEGIN_SRC sh
+delete filesp lxdv81 *
+REMove Node lxdv81
+#+END_SRC
+
+** Set Maximum Number of Mount Points
+   By default, each node handles a single session. The TSM copytool however,
+   handles operations such as retrieve or archive in separate threads, where each thread has a separate session
+   to the TSM server. If you get the error message: ~This node has exceeded its maximum number of mount points~,
+   make sure to set the parameter ~maxnummp~ to the value of maximum number of threads in the TSM copytool.
+#+BEGIN_SRC sh
+update node lxdv81 maxnummp=<NUMBER_OF_THREADS>
+#+END_SRC
+The value ~maxnummp~ can be queried with command
+#+BEGIN_SRC sh
+q node lxdv81 f=d
+#+END_SRC
+** Set Archive Delete Flag
+   To specifies whether a client node can delete its own archived files
+   from the server set:
+#+BEGIN_SRC sh
+update node lxdv81 archdelete=yes
+#+END_SRC
+or
+#+BEGIN_SRC sh
+update node lxdv81 archdelete=no
+#+END_SRC
+to disable deletion of the archive.
+** Update password and remove password expiration
+#+BEGIN_SRC sh
+update node lxdv81 <NEW_PW>
+update node lxdv81 passexp=0
+#+END_SRC
+
+** SQL query List fs,hl,ll
+#+BEGIN_SRC sh
+dsmadmc -se=polaris-kvm-tsm-server -id=admin -password='<MYPASSWD>' -commadelimited "select FILESPACE_NAME,HL_NAME,LL_NAME from ARCHIVES WHERE NODE_NAME = '<MY_NODE>'"
+#+END_SRC
+* Useful links
+** IBM documentation on TSM
+- [[http://web-docs.gsi.de/~tstibor/tsm/doc/ibm_tivoli_storage_management_concepts.pdf][IBM Tivoli Storage Management Concepts]]
+- [[http://web-docs.gsi.de/~tstibor/tsm/doc/ibm_tivoli_storage_management_implementation_guide.pdf][IBM Tivoli Storage Management Implementation Guide]]
+- [[http://web-docs.gsi.de/~tstibor/tsm/doc/using_the_programming_application_interface.pdf][API Using the Programming Application Interface]]
+- [[http://web-docs.gsi.de/~tstibor/tsm/doc/IBM_beyond_backup_toward_storage_management_white_paper.pdf][IBM Beyond Backup Toward Storage Management White Paper]]
+** TSM Wiki
+- http://emmanuel.iffly.free.fr/doku.php?id=tsm:tsm
+- [[http://wiki.fysik.dtu.dk/it/TSM-server-configuration][TSM-server-configuration]]
+** Great Stuff about IBM Tivoli Storage Manager (TSM Monitor, SQL, TSM Scripts)
+- http://thobias.org/tsm/
+** TSM SQL Hints
+- http://www.lascon.co.uk/tsm-sql-queries.php
+** Lustre HSM copytool
+- [[http://sourceforge.net/projects/lustrehpss/][Lustre HPSS copytool]]
+- [[http://git.hpdd.intel.com/fs/lustre-release.git/blob/HEAD:/lustre/utils/lhsmtool_posix.c][Lustre Posix copytool]]
+** Lustre HSM architecture
+- [[http://wiki.old.lustre.org/index.php/Architecture_-_HSM_Migration][Architecture HSM Migration]]
+** Lustre HSM Presentations
+- [[https://w3.hepix.org/storage/hep_pdf/2010/Spring/Lustre-HSM_HEPIX.pdf][Lustre-HSM binding]]
+- [[http://cdn.opensfs.org/wp-content/uploads/2015/04/Lustre-HSM-in-the-Cloud_Read.pdf][Lustre* HSM in the Cloud]]
+- [[http://www.eofs.eu/fileadmin/lad2013/slides/10_Aurelien_Degremont_lustre_hsm_lad13.pdf][Lustre/HSM is there!]]
