@@ -1,0 +1,28 @@
+Format: 1.8
+Date: Mon, 11 Dec 2017 12:26:50 +0200
+Source: ltsm
+Binary: ltsm
+Architecture: source amd64
+Version: 0.7.1
+Distribution: unstable
+Urgency: medium
+Maintainer: Thomas Stibor <t.stibor@gsi.de>
+Changed-By: Thomas Stibor <t.stibor@gsi.de>
+Description:
+ ltsm       - Lustre TSM copytool and TSM console client
+Changes:
+ ltsm (0.7.1) unstable; urgency=medium
+ .
+   * Update systemd requirements and fix archive_id handling.
+Checksums-Sha1:
+ 6e30e9e41003956761e07763fc6d078644f460d9 599 ltsm_0.7.1.dsc
+ c5a6627f09649968dce492f613123c686bb1f238 420323 ltsm_0.7.1.tar.gz
+ 67dee96c5b0ca645cd2abb6653dbe5867b2931c9 57750 ltsm_0.7.1_amd64.deb
+Checksums-Sha256:
+ 7df1576158b3c04ce285aab5543bb4b916bdd71b7d4d6f7955c3c432bcd1d994 599 ltsm_0.7.1.dsc
+ 5a7bead92f7e6f4673eec7aaef5b9a8bb044358e7b36c8377974e1391d1b5949 420323 ltsm_0.7.1.tar.gz
+ f26bce024fb06698cf109bf4ac2b73123d097169983a1b52d0d978de4e76dd7a 57750 ltsm_0.7.1_amd64.deb
+Files:
+ 4adf3df00ce1cd8b0099080af74e94a5 599 utils optional ltsm_0.7.1.dsc
+ ebdcd2461b6cab1c94a470ff4bb064a6 420323 utils optional ltsm_0.7.1.tar.gz
+ 4f2cba7359ef268881385edea92193bf 57750 utils optional ltsm_0.7.1_amd64.deb
