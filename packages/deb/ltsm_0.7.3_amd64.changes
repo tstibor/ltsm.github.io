@@ -1,0 +1,35 @@
+Format: 1.8
+Date: Thu, 09 Aug 2018 10:53:30 +0200
+Source: ltsm
+Binary: ltsm
+Architecture: source amd64
+Version: 0.7.3
+Distribution: unstable
+Urgency: medium
+Maintainer: Thomas Stibor <t.stibor@gsi.de>
+Changed-By: Thomas Stibor <t.stibor@gsi.de>
+Description:
+ ltsm       - Lustre TSM copytool and TSM console client
+Changes:
+ ltsm (0.7.3) unstable; urgency=medium
+ .
+   * Lower and upper date/time bound for querying.
+   * Display in query results the CRC32 value.
+Checksums-Sha1:
+ 204a9117abe4efc64e9fd06a2ff227fa82cd5add 599 ltsm_0.7.3.dsc
+ e6d20140d82a05e96fad2012382d8d85a5964c10 459281 ltsm_0.7.3.tar.gz
+ d91aeaf5f306e00fdeb737d5970e82a78f420f6c 144148 ltsm-dbgsym_0.7.3_amd64.deb
+ a760ef052523df35c790bcacb4e63768172ddd49 5916 ltsm_0.7.3_amd64.buildinfo
+ 9f4097948932eb6f207b37a4981fa66042d26763 62068 ltsm_0.7.3_amd64.deb
+Checksums-Sha256:
+ 84a32b2d0e54ebfe5ed6aef9959db20a42578be40d2bc2e184bacf5b5505c207 599 ltsm_0.7.3.dsc
+ 6ecf9834a5abb2d84c993ac4fc2b8f62903b0a4533a0f1f0c1390bc65c0be800 459281 ltsm_0.7.3.tar.gz
+ 5546587f033ddf866b7851647aa1cc400f6ad3b163025f1261b0d31a2095b995 144148 ltsm-dbgsym_0.7.3_amd64.deb
+ 9333ba5f250948ee3d33fefd19c6e0c346d33814a991236fe5366347bc3dec4f 5916 ltsm_0.7.3_amd64.buildinfo
+ ce38bb10f17f47b7f4faefbac2946164e0d74aee24e2332b49d431e5268d61db 62068 ltsm_0.7.3_amd64.deb
+Files:
+ 0bf0f490ede17fdef8d5c06427a5a13a 599 utils optional ltsm_0.7.3.dsc
+ e82295db0f5f30f5a35577826d6fc336 459281 utils optional ltsm_0.7.3.tar.gz
+ 0cbfde5a19013c26d55a4e17f5e8be03 144148 debug extra ltsm-dbgsym_0.7.3_amd64.deb
+ 3dc105b102188b9cc5a4a7be089789c4 5916 utils optional ltsm_0.7.3_amd64.buildinfo
+ 89ae9d03b91cd131e04c63dadc27ad78 62068 utils optional ltsm_0.7.3_amd64.deb
