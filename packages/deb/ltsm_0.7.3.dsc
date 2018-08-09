@@ -11,8 +11,8 @@ Build-Depends: debhelper (>= 9), autotools-dev, dh-systemd (>= 1.5)
 Package-List:
  ltsm deb utils optional arch=any
 Checksums-Sha1:
- e6d20140d82a05e96fad2012382d8d85a5964c10 459281 ltsm_0.7.3.tar.gz
+ c02122a9dfd4ca177f1b6a657a7b4e2396081abd 459448 ltsm_0.7.3.tar.gz
 Checksums-Sha256:
- 6ecf9834a5abb2d84c993ac4fc2b8f62903b0a4533a0f1f0c1390bc65c0be800 459281 ltsm_0.7.3.tar.gz
+ 64f2b11b26c95d46c80e1967a530493c54eb764cf88c426bbdbdc7e65331beca 459448 ltsm_0.7.3.tar.gz
 Files:
- e82295db0f5f30f5a35577826d6fc336 459281 ltsm_0.7.3.tar.gz
+ 1a4efd4b8167341a1739bf40048dcdad 459448 ltsm_0.7.3.tar.gz

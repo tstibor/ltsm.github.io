@@ -4,20 +4,20 @@ Binary: ltsm
 Architecture: amd64 source
 Version: 0.7.3
 Checksums-Md5:
- 0bf0f490ede17fdef8d5c06427a5a13a 599 ltsm_0.7.3.dsc
- 0cbfde5a19013c26d55a4e17f5e8be03 144148 ltsm-dbgsym_0.7.3_amd64.deb
- 89ae9d03b91cd131e04c63dadc27ad78 62068 ltsm_0.7.3_amd64.deb
+ 70ad43952d9e1307709d567466d7b898 599 ltsm_0.7.3.dsc
+ 4c2eebf484fb1865b069370bcbd8098a 144242 ltsm-dbgsym_0.7.3_amd64.deb
+ ebc5b59c16684149d763b14df8978128 62092 ltsm_0.7.3_amd64.deb
 Checksums-Sha1:
- 204a9117abe4efc64e9fd06a2ff227fa82cd5add 599 ltsm_0.7.3.dsc
- d91aeaf5f306e00fdeb737d5970e82a78f420f6c 144148 ltsm-dbgsym_0.7.3_amd64.deb
- 9f4097948932eb6f207b37a4981fa66042d26763 62068 ltsm_0.7.3_amd64.deb
+ f4d122279f7f507281bcaf1a388e0c3ffd98beef 599 ltsm_0.7.3.dsc
+ a759c62db6da815a128106e87d9da9693f19bc21 144242 ltsm-dbgsym_0.7.3_amd64.deb
+ b0a0d2c02862da2ef94564d31a354558a38f7884 62092 ltsm_0.7.3_amd64.deb
 Checksums-Sha256:
- 84a32b2d0e54ebfe5ed6aef9959db20a42578be40d2bc2e184bacf5b5505c207 599 ltsm_0.7.3.dsc
- 5546587f033ddf866b7851647aa1cc400f6ad3b163025f1261b0d31a2095b995 144148 ltsm-dbgsym_0.7.3_amd64.deb
- ce38bb10f17f47b7f4faefbac2946164e0d74aee24e2332b49d431e5268d61db 62068 ltsm_0.7.3_amd64.deb
+ a9942fe76dbf8abe740d9cc120172c6e61032bd2e029704d57f48bc382ec3d89 599 ltsm_0.7.3.dsc
+ 6a1412f9b3edaa4db9ba7fa827cd1c3347f0d3cfa9d3102dd33dd1dbbbfe786e 144242 ltsm-dbgsym_0.7.3_amd64.deb
+ ca7555841aeeb909244e620787474c45756fc29a97cfaea7134788090a7b4cb4 62092 ltsm_0.7.3_amd64.deb
 Build-Origin: Debian
 Build-Architecture: amd64
-Build-Date: Thu, 09 Aug 2018 11:08:10 +0200
+Build-Date: Thu, 09 Aug 2018 14:15:42 +0200
 Installed-Build-Depends:
  autoconf (= 2.69-10),
  automake (= 1:1.15-6),
@@ -186,6 +186,6 @@ Installed-Build-Depends:
 Environment:
  DEB_BUILD_OPTIONS="parallel=4"
  LANG="en_US.utf8"
- LD_LIBRARY_PATH=":/opt/AMD/AMDAPPSDK-2.9-1/lib/x86_64/:/opt/qt/3/lib:/opt/AMD/AMDAPPSDK-2.9-1/lib/x86_64/:/opt/qt/3/lib"
+ LD_LIBRARY_PATH=":/opt/AMD/AMDAPPSDK-2.9-1/lib/x86_64/:/opt/qt/3/lib"
  MAKEFLAGS=""
  SOURCE_DATE_EPOCH="1533804810"
