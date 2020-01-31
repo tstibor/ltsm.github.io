@@ -1,0 +1,34 @@
+Format: 1.8
+Date: Fri, 30 Jan 2020 12:40:30 +0200
+Source: ltsm
+Binary: ltsm ltsm-dbgsym
+Architecture: source amd64
+Version: 0.8.1
+Distribution: unstable
+Urgency: medium
+Maintainer: Thomas Stibor <t.stibor@gsi.de>
+Changed-By: Thomas Stibor <t.stibor@gsi.de>
+Description:
+ ltsm       - Lustre TSM copytool, TSM console client and LTSMFSD file system d
+Changes:
+ ltsm (0.8.1) unstable; urgency=medium
+ .
+   * TSM file system daemon bug fixes.
+Checksums-Sha1:
+ 068c35626e991e885838781a62940b83b31f9296 599 ltsm_0.8.1.dsc
+ 43e89a95e5187d98cca339f758b5bb3b13495de8 475064 ltsm_0.8.1.tar.gz
+ 62591936a24e0f92924a84cf5683981a8fc9e639 282332 ltsm-dbgsym_0.8.1_amd64.deb
+ 4cdc122b2d1cd541c8e58c9e8966635eebf2dd99 5998 ltsm_0.8.1_amd64.buildinfo
+ f860be2de9a4df146bbd9ef656ac8c66d9c709b8 83356 ltsm_0.8.1_amd64.deb
+Checksums-Sha256:
+ 3d984ef12b19bfc8da19c357ccbb058593bc49f2aea9c57685883c624f06faee 599 ltsm_0.8.1.dsc
+ b9a7893e6387d11e4079bb170fe53ab4056e3242ad193c6e78f4c270024d897a 475064 ltsm_0.8.1.tar.gz
+ 2b258d147d06ba1d279af8f06670e278c1c1f4395eb4100d7e345c1b60630954 282332 ltsm-dbgsym_0.8.1_amd64.deb
+ 36500faf9224885f9e70093c7bbe2ac9e8905640a5d464e55f403f28fb24018a 5998 ltsm_0.8.1_amd64.buildinfo
+ 55f05eb27e99437f53aa6921eeeb640bda78d01b5e3572c9db0a9efe280f8bb8 83356 ltsm_0.8.1_amd64.deb
+Files:
+ 5c79fc733ca316d7b23df4cb2ee75581 599 utils optional ltsm_0.8.1.dsc
+ d28aaee890ae2cf0f464863a66a29f7b 475064 utils optional ltsm_0.8.1.tar.gz
+ 72148d3e48e2daf39ce5cff2e0379f47 282332 debug optional ltsm-dbgsym_0.8.1_amd64.deb
+ d2e073648735f06955c078dadd8a7e04 5998 utils optional ltsm_0.8.1_amd64.buildinfo
+ c009a0dfacf25c5d2e1ca3247b210c9e 83356 utils optional ltsm_0.8.1_amd64.deb
